@@ -5,11 +5,11 @@ class GroceryItem {
     required this.id,
     required this.name,
     required this.quantity,
-    this.category
+    required this.category
   });
 
   final String id;
   final String name;
   final int quantity;
-  final Category? category;
+  final Category category;
 }
