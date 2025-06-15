@@ -16,6 +16,7 @@ class GroceriesList extends StatefulWidget {
 class _GroceriesListState extends State<GroceriesList> {
   List<GroceryItem> _groceryItems = [];
   var _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -30,9 +31,14 @@ class _GroceriesListState extends State<GroceriesList> {
     );
 
     final response = await http.get(url);
-    final Map<String, dynamic> listData = json.decode(
-      response.body,
-    );
+
+    if (response.statusCode >= 400) {
+      setState(() {
+        _error = 'Failed to fetch data. Please try again later.';
+      });
+    }
+
+    final Map<String, dynamic> listData = json.decode(response.body);
     final List<GroceryItem> loadedItems = [];
 
     for (final item in listData.entries) {
@@ -67,7 +73,7 @@ class _GroceriesListState extends State<GroceriesList> {
       MaterialPageRoute(builder: (ctx) => NewItem()),
     );
 
-    if(newItem == null) {
+    if (newItem == null) {
       return;
     }
 
@@ -86,8 +92,8 @@ class _GroceriesListState extends State<GroceriesList> {
   Widget build(BuildContext context) {
     Widget content = Center(child: Text('You got no items yet'));
 
-    if(_isLoading) {
-      content = const Center(child: CircularProgressIndicator(),);
+    if (_isLoading) {
+      content = const Center(child: CircularProgressIndicator());
     }
 
     if (_groceryItems.isNotEmpty) {
@@ -113,6 +119,10 @@ class _GroceriesListState extends State<GroceriesList> {
           );
         },
       );
+    }
+
+    if (_error != null) {
+      content = Center(child: Text(_error!));
     }
 
     return Scaffold(
