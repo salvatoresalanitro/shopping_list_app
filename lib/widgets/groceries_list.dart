@@ -1,4 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shopping_list_app/data/categories.dart';
+import 'package:shopping_list_app/models/category.dart';
 import 'package:shopping_list_app/models/grocery_item.dart';
 import 'package:shopping_list_app/widgets/new_item.dart';
 
@@ -10,20 +15,58 @@ class GroceriesList extends StatefulWidget {
 }
 
 class _GroceriesListState extends State<GroceriesList> {
-  final List<GroceryItem> _groceryItems = [];
+  List<GroceryItem> _groceryItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadItems();
+  }
+
+  void _loadItems() async {
+    final url = Uri.https(
+      'shopping-list-77450-default-rtdb.europe-west1.firebasedatabase.app',
+      'shopping-list.json',
+    );
+
+    final response = await http.get(url);
+    final Map<String, dynamic> listData = json.decode(
+      response.body,
+    );
+    final List<GroceryItem> loadedItems = [];
+
+    for (final item in listData.entries) {
+      final itemProperties = item.value;
+      final category = categories.entries
+          .firstWhere(
+            (catItem) =>
+                catItem.value.categoryName ==
+                itemProperties['category'],
+          )
+          .value;
+
+      loadedItems.add(
+        GroceryItem(
+          id: item.key,
+          name: itemProperties['name'],
+          quantity: itemProperties['quantity'],
+          category: category,
+        ),
+      );
+    }
+
+    setState(() {
+      _groceryItems = loadedItems;
+    });
+  }
 
   void _addItem() async {
-    final newItem = await Navigator.push<GroceryItem>(
+    await Navigator.push<GroceryItem>(
       context,
       MaterialPageRoute(builder: (ctx) => NewItem()),
     );
 
-    if (newItem == null) {
-      return;
-    }
-    setState(() {
-      _groceryItems.add(newItem);
-    });
+    _loadItems();
   }
 
   void _removeItem(GroceryItem grocery) {
@@ -40,7 +83,6 @@ class _GroceriesListState extends State<GroceriesList> {
       content = ListView.builder(
         itemCount: _groceryItems.length,
         itemBuilder: (ctx, index) {
-
           final grocery = _groceryItems[index];
 
           return Dismissible(
