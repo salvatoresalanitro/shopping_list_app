@@ -82,10 +82,26 @@ class _GroceriesListState extends State<GroceriesList> {
     });
   }
 
-  void _removeItem(GroceryItem grocery) {
+  void _removeItem(GroceryItem grocery) async {
+    final index = _groceryItems.indexOf(grocery);
+
     setState(() {
       _groceryItems.remove(grocery);
     });
+
+    final url = Uri.https(
+      'shopping-list-77450-default-rtdb.europe-west1.firebasedatabase.app',
+      'shopping-list/${grocery.id}.json',
+    );
+
+    final response = await http.delete(url);
+
+    if(response.statusCode >= 400) {
+      //TODO: show an error messagge with snackbar or related
+      setState(() {
+        _groceryItems.insert(index, grocery);
+      });
+    }
   }
 
   @override
